@@ -14,8 +14,8 @@ joystick_data joystickData;
 esp_now_peer_info_t peerInfo;
 
 //Joystick
-const int X_pin = 34; // analog input pin for x
-const int Y_pin = 35; // analog input pin for y
+const int X_pin = 32; // analog input pin for x
+const int Y_pin = 33; // analog input pin for y
 
 // callback when data is sent
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
@@ -55,8 +55,6 @@ void setup() {
 void loop() {
   joystickData.x = analogRead(X_pin);
   joystickData.y = analogRead(Y_pin);
-  Serial.println("x:" + joystickData.x);
-  Serial.println("y:" + joystickData.y);
  
   esp_err_t result = esp_now_send(0, (uint8_t *) &joystickData, sizeof(joystick_data));
    
