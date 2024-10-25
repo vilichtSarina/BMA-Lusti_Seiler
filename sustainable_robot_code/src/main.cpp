@@ -9,22 +9,54 @@ const int kLight = 26;
 const int kXpin = 32;
 const int kYpin = 33;
 
-Servo servo;
-int servoPin = 25;
-int pos = 0;
+// Pin definition for 1 channel relay.
+const int kRelayR = 32;
+const int kRelayL = 33;
 
-int current_state = HIGH;
+Servo servoR;
+int servoPinR = 26;
+Servo servoL;
+const int servoPinL = 25;
+
+int currentState = HIGH;
 int lastPostition = 90;
 
 void setup() {
   Serial.begin(9600);
-  servo.attach(servoPin, 800, 2200);
+  pinMode(servoPinR, OUTPUT);
+  servoR.attach(servoPinR, 800, 2200);
+  pinMode(kRelayR, OUTPUT);
+
+  pinMode(servoPinL, OUTPUT);
+  servoL.attach(servoPinL, 800, 2200);
+  pinMode(kRelayL, OUTPUT);
 }
 
-void loop() {
-  servo.write(90);
-  delay(1000);
+// int activationState() {}
 
-  Serial.printf("X: %d\t\t", analogRead(kXpin));
-  Serial.print("\n");
+void loop() {
+  servoR.write(-90);
+  servoL.write(90);
+
+  if (currentState == HIGH) {
+    digitalWrite(kRelayR, HIGH);
+    digitalWrite(servoPinR, HIGH);
+
+    digitalWrite(kRelayL, HIGH);
+    digitalWrite(servoPinL, HIGH);
+
+    currentState = LOW;
+
+    delay(3000);
+
+  } else {
+    digitalWrite(kRelayR, LOW);
+    digitalWrite(servoPinR, LOW);
+
+    digitalWrite(kRelayL, LOW);
+    digitalWrite(servoPinL, LOW);
+
+    currentState = HIGH;
+  }
+  delay(1000);
 }
