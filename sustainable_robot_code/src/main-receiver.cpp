@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <ESP32Servo.h>
+#include <esp_now.h>
+#include <WiFi.h>
 
 // Pin definition for misc. actuators.
 const int kButton = 15;
@@ -21,8 +23,37 @@ const int servoPinL = 25;
 int currentState = HIGH;
 int lastPostition = 90;
 
+typedef struct joystick_data {
+  int x;
+  int y;
+} joystick_data;
+
+joystick_data joystickData;
+
+//callback function that will be executed when data is received
+void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+  memcpy(&joystickData, incomingData, sizeof(joystickData));
+  Serial.print("Bytes received: ");
+  Serial.println(len);
+  Serial.print("x: ");
+  Serial.println(joystickData.x);
+  Serial.print("y: ");
+  Serial.println(joystickData.y);
+  Serial.println();
+}
+
 void setup() {
   Serial.begin(9600);
+
+  WiFi.mode(WIFI_STA);
+
+  //Init ESP-NOW for communication
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("Error initializing ESP-NOW");
+    return;
+  }
+  esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
+
   pinMode(servoPinR, OUTPUT);
   servoR.attach(servoPinR, 800, 2200);
   pinMode(kRelayR, OUTPUT);
