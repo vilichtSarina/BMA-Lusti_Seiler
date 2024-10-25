@@ -97,5 +97,5 @@ void loop() {
     Serial.printf("Failed sending data with error %d.\n", send_data_status);
   }
 
-  delay(2000);
+  delay(1000);
 }
