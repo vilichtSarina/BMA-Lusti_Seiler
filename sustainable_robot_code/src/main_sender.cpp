@@ -29,8 +29,8 @@ EspErr EspNowInit() { return esp_now_init(); }
 // The hexadecimal representation of the ESP receiver's mac address.
 const uint8_t RECEIVER_BROADCAST_ADDR[] = {0x58, 0xBF, 0x25, 0x93, 0xEE, 0x18};
 // The pin constants for the joystick axes.
-const int X_PIN = 34;
-const int Y_PIN = 35;
+const int X_PIN = 32;
+const int Y_PIN = 33;
 
 // Represents X and Y coordinates of a given joystick position. Both axes have
 // values ranging from 0 to 4096.
