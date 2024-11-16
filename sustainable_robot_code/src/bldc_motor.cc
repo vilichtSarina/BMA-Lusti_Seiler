@@ -12,7 +12,7 @@
 
 ESC myESC(ESC_PIN, 1000, 2000, 500);
 
-long int val;  // variable to read the value from the analog pin
+long int joystick_value;
 
 void setup() {
   // Baud rate.
@@ -43,11 +43,11 @@ void loop() {
   // motor.
   // TODO: remove hard-coded value, set up connection with joystick modules.
   joystick_value = 2000;
-  Serial.println(val);
-  val = map(val, 0, 4095, MIN_SPEED, MAX_SPEED);
+  Serial.println(joystick_value);
+  joystick_value = map(joystick_value, 0, 4095, MIN_SPEED, MAX_SPEED);
 
   // Set speed to the mapped value.
-  myESC.speed(val);
+  myESC.speed(joystick_value);
   // Give motor 10ms to reach the speed.
   delay(10);
 }
