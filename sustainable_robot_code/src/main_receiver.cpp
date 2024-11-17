@@ -1,93 +1,89 @@
 #include <Arduino.h>
 #include <ESP32Servo.h>
-#include <esp_now.h>
 #include <WiFi.h>
+#include <esp_now.h>
 
-// Pin definition for misc. actuators.
-const int kButton = 15;
-const int kLight = 26;
+#include "ESC.h"
 
-// Pin definition for joystick.
-const int kXpin = 32;
-const int kYpin = 33;
+const int kJoystickMin = 0;
+const int kJoystickMax = 4095;
 
-// Pin definition for 1 channel relay.
-const int kRelayR = 32;
-const int kRelayL = 33;
+// Pin definition for ESCs, which control the BLDCs.
+const int kEscLeft = 25;
+const int kEscRight = 26;
 
-Servo servoR;
-int servoPinR = 26;
-Servo servoL;
-const int servoPinL = 25;
+// Used for steering.
+const int kServoPinRight = 12;
+const int kServoPinLeft = 13;
 
-int currentState = HIGH;
-int lastPostition = 90;
+// Represents X and Y coordinates of a given joystick position. Both axes have
+// values ranging from 0 to 4096.
+typedef struct JoystickData {
+  int x = 0;
+  int y = 0;
+  int z = 0;
 
-typedef struct joystick_data {
-  int x;
-  int y;
-} joystick_data;
+  void print() { printf("x:%d, y:%d", x, y); }
+} JoystickData;
 
-joystick_data joystickData;
+JoystickData joystickData;
 
-//callback function that will be executed when data is received
-void OnDataRecv(const uint8_t * mac, const uint8_t *incomingData, int len) {
+ESC escRight(kEscRight, /*minimum=*/1000, /*maximum=*/2000, /*arm=*/500);
+ESC escLeft(kEscLeft, /*minimum=*/1000, /*maximum=*/2000, /*arm=*/500);
+
+Servo servoRight;
+Servo servoLeft;
+
+// callback function that will be executed when data is received
+void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
   memcpy(&joystickData, incomingData, sizeof(joystickData));
   Serial.print("Bytes received: ");
   Serial.println(len);
-  Serial.print("x: ");
-  Serial.println(joystickData.x);
-  Serial.print("y: ");
-  Serial.println(joystickData.y);
-  Serial.println();
+  joystickData.print();
+}
+
+// Used to execute arming command, which is needed to start the motors.
+void arm() {
+  escRight.arm();
+  escLeft.arm();
+}
+
+void adjustAngle(const int angle) {
+  servoLeft.write(angle);
+  servoRight.write(angle);
+}
+
+void adjustSpeed(const int speed) {
+  escLeft.speed(speed);
+  escRight.speed(speed);
 }
 
 void setup() {
   Serial.begin(9600);
 
+  // Init ESP-NOW for communication.
   WiFi.mode(WIFI_STA);
-
-  //Init ESP-NOW for communication
   if (esp_now_init() != ESP_OK) {
     Serial.println("Error initializing ESP-NOW");
     return;
   }
   esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv));
 
-  pinMode(servoPinR, OUTPUT);
-  servoR.attach(servoPinR, 800, 2200);
-  pinMode(kRelayR, OUTPUT);
-
-  pinMode(servoPinL, OUTPUT);
-  servoL.attach(servoPinL, 800, 2200);
-  pinMode(kRelayL, OUTPUT);
+  servoRight.attach(kServoPinRight);
+  servoLeft.attach(kServoPinLeft);
 }
 
-// int activationState() {}
-
 void loop() {
-  servoR.write(-90);
-  servoL.write(90);
-
-  if (currentState == HIGH) {
-    digitalWrite(kRelayR, HIGH);
-    digitalWrite(servoPinR, HIGH);
-
-    digitalWrite(kRelayL, HIGH);
-    digitalWrite(servoPinL, HIGH);
-
-    currentState = LOW;
-
-    delay(3000);
-
-  } else {
-    digitalWrite(kRelayR, LOW);
-    digitalWrite(servoPinR, LOW);
-
-    digitalWrite(kRelayL, LOW);
-    digitalWrite(servoPinL, LOW);
-
-    currentState = HIGH;
+  // If joystick button is pressed down, execute the arming command needed to
+  // init the BLDCs.
+  if (joystickData.z == LOW) {
+    arm();
   }
-  delay(1000);
+
+  const int angle = map(joystickData.x, kJoystickMin, kJoystickMax, -90, 90);
+  adjustAngle(angle);
+
+  const int speed =
+      map(joystickData.y, kJoystickMin, kJoystickMax, 0, /*maximum=*/2000);
+  adjustSpeed(speed);
 }

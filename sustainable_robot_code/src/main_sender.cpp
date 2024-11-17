@@ -32,12 +32,14 @@ const uint8_t RECEIVER_BROADCAST_ADDR[] = {0x58, 0xBF, 0x25, 0x93, 0xEE, 0x18};
 // The pin constants for the joystick axes.
 const int X_PIN = 32;
 const int Y_PIN = 33;
+const int Z_PIN = 35;
 
 // Represents X and Y coordinates of a given joystick position. Both axes have
 // values ranging from 0 to 4096.
 typedef struct JoystickData {
   int x;
   int y;
+  int z;
 
   void print() { printf("x:%d, y:%d", x, y); }
 } JoystickData;
@@ -53,8 +55,8 @@ void OnDataSent(const uint8_t *mac_addr, EspNowSendStatus status) {
   snprintf(mac, sizeof(mac), "%02x:%02x:%02x:%02x:%02x:%02x", mac_addr[0],
            mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
   Serial.printf("%s send status:\t", mac);
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success"
-                                                : "Delivery Fail");
+  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery; Success"
+                                                : "Delivery; Fail");
 }
 
 // Initialize and setup GPIO pins and establish WiFi connection for
@@ -86,7 +88,8 @@ void setup() {
 }
 
 void loop() {
-  JoystickData joystick_data{.x = analogRead(X_PIN), .y = analogRead(Y_PIN)};
+  JoystickData joystick_data{
+      .x = analogRead(X_PIN), .y = analogRead(Y_PIN), .z = analogRead(Z_PIN)};
   joystick_data.print();
 
   EspErr send_data_status =
