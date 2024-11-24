@@ -28,20 +28,25 @@ EspErr EspNowInit() { return esp_now_init(); }
 }  // namespace
 
 // The hexadecimal representation of the ESP receiver's mac address.
-const uint8_t RECEIVER_BROADCAST_ADDR[] = {0x58, 0xBF, 0x25, 0x93, 0xEE, 0x18};
+// Yannis = {0x58, 0xBF, 0x25, 0x93, 0xEE, 0x18};
+// Sarina = {0x58, 0xBF, 0x25, 0x93, 0xB6, 0x68};
+// Yannis2= {0x58, 0xBF, 0x25, 0x93, 0xD0, 0x24};
+// 58:bf:25:93:d0:24
+const uint8_t RECEIVER_BROADCAST_ADDR[] = {0x58, 0xBF, 0x25, 0x93, 0xD0, 0x24};
 // The pin constants for the joystick axes.
-const int X_PIN = 32;
-const int Y_PIN = 33;
-const int Z_PIN = 35;
+const int kXPinDir = 32;
+
+const int kXPinSpeed = 35;
+const int kYPinSpeed = 22;
 
 // Represents X and Y coordinates of a given joystick position. Both axes have
 // values ranging from 0 to 4096.
 typedef struct JoystickData {
-  int x;
-  int y;
-  int z;
+  int xDir;
+  int xSpeed;
+  int ySpeed;
 
-  void print() { printf("x:%d, y:%d", x, y); }
+  void print() { printf("x:%d, xS:%d, yS:%d\n", xDir, xSpeed, ySpeed); }
 } JoystickData;
 
 // Callback function to pass to EspNowPeerInfo when messages are sent. Returns
@@ -88,8 +93,9 @@ void setup() {
 }
 
 void loop() {
-  JoystickData joystick_data{
-      .x = analogRead(X_PIN), .y = analogRead(Y_PIN), .z = analogRead(Z_PIN)};
+  JoystickData joystick_data{.xDir = analogRead(kXPinDir),
+                             .xSpeed = analogRead(kXPinSpeed),
+                             .ySpeed = digitalRead(kYPinSpeed)};
   joystick_data.print();
 
   EspErr send_data_status =
